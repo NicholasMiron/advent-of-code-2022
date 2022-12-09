@@ -14,34 +14,51 @@ class Rope {
     const lead = this.sections[leadI];
     const trail = this.sections[trailI];
 
-    const xDiff = lead.x - trail.x;
-    const yDiff = lead.y - trail.y;
+    const isTouching = Math.abs(lead.x - trail.x) <= 1 && Math.abs(lead.y - trail.y) <= 1;
 
-    const toFar = {
-      up: yDiff === 2 && xDiff === 0,
-      down: yDiff === -2 && xDiff === 0,
-      left: yDiff === 0 && xDiff === -2,
-      right: yDiff === 0 && xDiff === 2,
-      quad1: (xDiff === 1 && yDiff === 2) || (xDiff === 2 && yDiff === 1) || (xDiff === 2 && yDiff === 2),
-      quad2: (xDiff === 2 && yDiff === -1) || (xDiff === 1 && yDiff === -2) || (xDiff === 2 && yDiff === -2),
-      quad3: (xDiff === -1 && yDiff === -2) || (xDiff === -2 && yDiff === -1) || (xDiff === -2 && yDiff === -2),
-      quad4: (xDiff === -2 && yDiff === 1) || (xDiff === -1 && yDiff === 2) || (xDiff === -2 && yDiff === 2),
-    };
+    let xMove = 0;
+    let yMove = 0;
 
-    if (toFar.right) this.movePiece(trailI, 1, 0);
-    else if (toFar.left) this.movePiece(trailI, -1, 0);
-    else if (toFar.up) this.movePiece(trailI, 0, 1);
-    else if (toFar.down) this.movePiece(trailI, 0, -1);
-    else if (toFar.quad1) this.movePiece(trailI, 1, 1);
-    else if (toFar.quad2) this.movePiece(trailI, 1, -1);
-    else if (toFar.quad3) this.movePiece(trailI, -1, -1);
-    else if (toFar.quad4) this.movePiece(trailI, -1, 1);
+    // Too far from x axis
+    if (lead.y === trail.y) {
+      if (lead.x - trail.x > 1) xMove = 1;
+      if (trail.x - lead.x > 1) xMove = -1;
+    }
+    // Too far from y axis
+    else if (lead.x === trail.x) {
+      if (lead.y - trail.y > 1) yMove = 1;
+      if (trail.y - lead.y > 1) yMove = -1;
+    }
+    // Too far in quadrant 1
+    else if (lead.x > trail.x && lead.y > trail.y && !isTouching) {
+      xMove = 1;
+      yMove = 1;
+    }
+    // Too far in quadrant 2
+    else if (lead.x > trail.x && trail.y > lead.y && !isTouching) {
+      xMove = 1;
+      yMove = -1;
+    }
+    // Too far in quadrant 3
+    else if (trail.x > lead.x && trail.y > lead.y && !isTouching) {
+      xMove = -1;
+      yMove = -1;
+    }
+    // Too far in quadrant 4
+    else if (trail.x > lead.x && lead.y > trail.y && !isTouching) {
+      xMove = -1;
+      yMove = 1;
+    }
+
+    this.movePiece(trailI, xMove, yMove);
   }
 
   movePiece(pieceI, x, y) {
     const curSection = this.sections[pieceI];
     this.sections[pieceI] = { x: curSection.x + x, y: curSection.y + y };
-    if (this.sections.length - 1 === pieceI) this.tailVisitedPos.add(`${curSection.x},${curSection.y}`);
+    if (this.sections.length - 1 === pieceI) {
+      this.tailVisitedPos.add(`${this.sections[pieceI].x},${this.sections[pieceI].y}`);
+    }
   }
 
   move(direction) {
@@ -74,7 +91,7 @@ function range (rng, cb) {
   for (let i = 0; i < rng; i++) {
     cb()
   }
-};
+}
 
 const solution = (input) => {
   const commands = input
